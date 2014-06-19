@@ -12,6 +12,8 @@
             type="text/javascript"></script>
     <script src="js/lib/Detector.js"
             type="text/javascript"></script>
+    <script src="js/lib/STLLoader.js"
+            type="text/javascript"></script>
 </head>
 <body>
 <div id="container"></div>
@@ -38,21 +40,23 @@
 
             // world
 
-            var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
-            var material =  new THREE.MeshLambertMaterial( { color:0xffffff, shading: THREE.FlatShading } );
+            var loader = new THREE.STLLoader();
+            loader.addEventListener('load', function(event) {
+                var geometry = event.content;
+                var material = new THREE.MeshBasicMaterial({color: 0x000000});
+                var mesh = new THREE.Mesh(geometry, material);
 
-            for ( var i = 0; i < 500; i ++ ) {
+                mesh.position.set( 0, 10, 0 );
+                mesh.rotation.set( 0,  Math.PI, 0 );
+                mesh.scale.set( 0.5, 0.5, 0.5 );
 
-                var mesh = new THREE.Mesh( geometry, material );
-                mesh.position.x = ( Math.random() - 0.5 ) * 1000;
-                mesh.position.y = ( Math.random() - 0.5 ) * 1000;
-                mesh.position.z = ( Math.random() - 0.5 ) * 1000;
-                mesh.updateMatrix();
-                mesh.matrixAutoUpdate = false;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
                 scene.add( mesh );
+            });
 
-            }
-
+            loader.load( 'stl/owl.stl' );
 
             // lights
 
