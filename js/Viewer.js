@@ -1,165 +1,142 @@
- //проверяем, работает ли webgl
-     function Main(model_path, model_texture_path) {
+function Viewer(container_id, path_to_model) {
 
-        if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+    var path_to_model = path_to_model || 'models/portal/portal.json';
+    var container_id  = container_id  || 'container';
+    var container = document.getElementById(container_id);
+    var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 2, 2000 );
+    var scene = new THREE.Scene();
+    var renderer = new THREE.WebGLRenderer( { antialias: true } );
+    var controls = new THREE.OrbitControls(camera);
 
-        var container, stats;
-        var camera, controls, scene, renderer;
+    var default_camera_position = new THREE.Vector3(400, 400, 300);
 
-        //var model_path = model_path;
-        //var model_texture_path = path_to_texture;
-
-        init();
-        render();
-
-        function init() {
-
-            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 2, 2000 );
-            camera.position.set(400, 400, 300);
-
-            controls = new THREE.OrbitControls( camera );
-            controls.addEventListener( 'change', render );
-
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2( 0xcccccc, 0.0008 );
-
-            var axis = new THREE.AxisHelper(1000);
-            scene.add(axis);
-
-            // lights
-            var light = new THREE.DirectionalLight();
-            light.position.set( 1, 1, 1 ); scene.add( light );
-            var light = new THREE.AmbientLight();
-            light.position.set(-2, -2,-2); scene.add(light);
-
-             // renderer
-
-            renderer = new THREE.WebGLRenderer( { antialias: true } );
-            renderer.setClearColor( scene.fog.color, 1 );
-            renderer.setSize( window.innerWidth, window.innerHeight);
-
-            container = document.getElementById( 'container' );
-            container.appendChild( renderer.domElement );
-
-            // loader
-
-            if(/stl/.test(model_path)){
-                var stl_loader = new THREE.STLLoader();
-                stl_loader.addEventListener( 'load', function ( event ) {
-                    var material = new THREE.MeshPhongMaterial( { ambient: 0x555555, color: 0x44a6c6, specular: 0x111111, shininess: 200 } );
-                    var geometry = event.content;
-                    var mesh = new THREE.Mesh( geometry, material );
-
-                    mesh.position.set( 0, 0, 0);
-                    //mesh.rotation.set( - Math.PI / 2, 0, 0 );
-                    //mesh.scale.set( 2, 2, 2 );
-
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-
-                    scene.add( mesh );
-                    render();
-                });
-
-                stl_loader.load(model_path);
-            }
-
-            if(/obj/.test(model_path)){
-
-                var manager = new THREE.LoadingManager();
-                manager.onProgress = function ( item, loaded, total ) {
-
-                    console.log( item, loaded, total );
+    var object;
+    var gui;
+    var command = new function() {
+                  this.Home  = function() {camera.position = default_camera_position; render();};
+                  this.X = function() {camera.position.set(500, 0, 0); render();};
+                  this.Y = function() {camera.position.set(0, 500, 0); render();};
+                  this.Z = function() {camera.position.set(0, 0, 500); render();};
                 };
 
-                var texture = new THREE.Texture();
+    init();
 
-                var loader = new THREE.ImageLoader( manager );
-                loader.load( model_texture_path, function ( image ) {
+    function init() {
+        // web gl enable?
+        if ( !Detector.webgl ) Detector.addGetWebGLMessage();
+        
+        //camera, controls and scene
+        camera.position = default_camera_position;
+        scene.fog = new THREE.FogExp2( 0xcccccc, 0.0008 );
 
-                    texture.image = image;
-                    texture.needsUpdate = true;
+        //lights
+        var light = new THREE.DirectionalLight();
+        light.position.set( 1, 1, 1 ); scene.add( light );
+        var light = new THREE.AmbientLight();
+        light.position.set(-2, -2,-2); scene.add(light);
 
-                } );
+        //renderer
+        renderer.setClearColor( scene.fog.color, 1 );
+        renderer.setSize( window.innerWidth, window.innerHeight);
 
-                // model
+        //container
+        container.appendChild(renderer.domElement);
 
-                var loader = new THREE.OBJLoader( manager );
-                loader.load( model_path, function ( object ) {
-                    object.traverse( function ( child ) {
-                        if ( child instanceof THREE.Mesh ) {
-                            child.material.map = texture;
-                        }
-                    } );
+        //grid
+        addGrid();
 
-                    object.position.set( 0, 0, 0);
-                    object.castShadow = true;
-                    object.receiveShadow = true;
-                    scene.add( object );
-                    render();
-                    });
+        //listeners
+        window.addEventListener( 'resize', onWindowResize, false );
+        controls.addEventListener( 'change', render );
 
-            }
+        //gui
+        addGui(command);
 
-
-
-            /*stats = new Stats();
-            stats.domElement.style.position = 'absolute';
-            stats.domElement.style.top = '0px';
-            stats.domElement.style.zIndex = 100;
-            container.appendChild( stats.domElement );
-            */
-
-            //controls
-
-            var gui = new dat.GUI();
-
-            var control = new function() {
-                this.Home  = function() {cameraStartPosition()};
-                this.X = function() {camera.position.set(500, 0, 0); render();};
-                this.Y = function() {camera.position.set(0, 500, 0); render();};
-                this.Z = function() {camera.position.set(0, 0, 500); render();};
-                this.Axis = true;
-
-            };
-
-            gui.add(control, "Home");
-            gui.add(control, "X");
-            gui.add(control, "Y");
-            gui.add(control, 'Z');
-            var c = gui.add(control, 'Axis');
-
-            c.onChange(function(value){
-                axis.visible = value;
-                render();
-            });
-
-            window.addEventListener( 'resize', onWindowResize, false );
-
-        }
-
-        function onWindowResize() {
-
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize( window.innerWidth, window.innerHeight );
-
-            render();
-
-        }
-
-        function render() {
-
-            camera.lookAt(scene.position);
-            renderer.render( scene, camera );
-            //stats.update();
-
-        }
-
-         function cameraStartPosition() {
-                camera.position.set(400, 400, 300);
-                render();
-            }
+        //load
+        load(path_to_model);
 
         render();
-     }
+    };
+
+    function load(path) {
+        function json_loader(_path){
+            var loader = new THREE.JSONLoader();
+            var callbackObject = function(geometry, material){
+            var zmesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( material ) );
+            zmesh.position.set( 0, 0, 0 );
+            if(zmesh.scale.y < 5) zmesh.scale.set(5, 5, 5 );
+            object = zmesh;
+            scene.add( zmesh );
+            //return zmesh;
+        }
+            //scene.add(loader.load(_path, callbackObject));
+            loader.load(_path, callbackObject);
+       }
+        function stl_loader(_path) {
+           var stl_loader = new THREE.STLLoader();
+           stl_loader.addEventListener( 'load', function ( event ) {
+           var material = new THREE.MeshPhongMaterial( { ambient: 0x555555, color: 0x44a6c6, specular: 0x111111, shininess: 200 } );
+           var geometry = event.content;
+           var mesh = new THREE.Mesh( geometry, material );
+           mesh.position.set( 0, 0, 0);
+           mesh.castShadow = true;
+           mesh.receiveShadow = true;
+           object = mesh;
+            scene.add( mesh );
+           });
+
+            stl_loader.load(_path);
+        }
+
+        if(/json/.test(path)) json_loader(path);
+        if(/obj/.test(path))  stl_loader(path);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        render();
+
+    }
+
+    function render() {
+        requestAnimationFrame(render);
+//        object.lookAt(camera.position);
+        camera.lookAt(scene.position);
+        renderer.render( scene, camera );
+    }
+
+    function addGrid(size, step){
+
+        size = size || 500;
+        step = step || 50;
+
+        var geometry = new THREE.Geometry();
+
+        for ( var i = - size; i <= size; i += step ) {
+
+            geometry.vertices.push( new THREE.Vector3( - size, 0, i ) );
+            geometry.vertices.push( new THREE.Vector3(   size, 0, i ) );
+
+            geometry.vertices.push( new THREE.Vector3( i, 0, - size ) );
+            geometry.vertices.push( new THREE.Vector3( i, 0,   size ) );
+
+        }
+
+        var material = new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.2 } );
+
+        var line = new THREE.Line( geometry, material );
+        line.type = THREE.LinePieces;
+        scene.add(line);
+    }
+
+    function addGui(comm){
+        gui = new dat.GUI();
+        gui.add(comm, "Home");
+        gui.add(comm, "X");
+        gui.add(comm, "Y");
+        gui.add(comm, 'Z');
+    }
+}
+
