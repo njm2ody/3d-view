@@ -21,14 +21,11 @@ function Viewer(path_to_model, path_to_texture, container_id) {
                   this.Z = function() {camera.position.set(0, 0, 500); render();};
                 };
 
-    //this.Render = render;
-
-
     init();
 
     function init() {
         // web gl enable?
-        //if ( !Detector.webgl ) Detector.addGetWebGLMessage();
+        if ( !Detector.webgl ) Detector.addGetWebGLMessage();
         
         //camera, controls and scene
         camera.position = default_camera_position;
@@ -60,7 +57,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
         //load
         load(path_to_model, path_to_texture);
 
-        //render();
+        render();
     };
 
     function load(path, texture_path) {
@@ -133,7 +130,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
         if(/obj/.test(path))  obj_loader(path, texture_path);
 
 
-        render();
+        //render();
     }
 
     function onWindowResize() {
@@ -149,6 +146,8 @@ function Viewer(path_to_model, path_to_texture, container_id) {
 //        object.lookAt(camera.position);
         camera.lookAt(scene.position);
         renderer.render( scene, camera );
+
+        nav_r.render(nav, nav_camera);
     }
 
     function addGrid(size, step){
