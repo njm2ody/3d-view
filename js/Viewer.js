@@ -143,11 +143,8 @@ function Viewer(path_to_model, path_to_texture, container_id) {
 
     function render() {
         requestAnimationFrame(render);
-//        object.lookAt(camera.position);
         camera.lookAt(scene.position);
         renderer.render( scene, camera );
-
-        nav_r.render(nav, nav_camera);
     }
 
     function addGrid(size, step){
