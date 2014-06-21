@@ -1,6 +1,7 @@
-function Viewer(/*path_to_model,*/ container_id) {
+function Viewer(path_to_model, path_to_texture, container_id) {
 
-  //  var path_to_model = path_to_model || 'models/portal/portal.json';
+    var path_to_model = path_to_model || 'models/portal/portal.json';
+    var path_to_texture = path_to_texture || '';
     var container_id  = container_id  || 'container';
     var container = document.getElementById(container_id);
     var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 2, 2000 );
@@ -20,7 +21,7 @@ function Viewer(/*path_to_model,*/ container_id) {
                   this.Z = function() {camera.position.set(0, 0, 500); render();};
                 };
 
-    this.Render = render;
+    //this.Render = render;
 
 
     init();
@@ -57,12 +58,12 @@ function Viewer(/*path_to_model,*/ container_id) {
         addGui(command);
 
         //load
-        //Viewer.load(path_to_model);
+        load(path_to_model, path_to_texture);
 
         //render();
     };
 
-    this.load = function load(path, texture_path) {
+    function load(path, texture_path) {
         function json_loader(_path){
             var json_loader = new THREE.JSONLoader();
             var callbackObject = function(geometry, material){
