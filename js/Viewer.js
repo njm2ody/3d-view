@@ -1,11 +1,12 @@
-function Viewer(container_id, path_to_model) {
+function Viewer(/*path_to_model,*/ container_id) {
 
-    var path_to_model = path_to_model || 'models/portal/portal.json';
+  //  var path_to_model = path_to_model || 'models/portal/portal.json';
     var container_id  = container_id  || 'container';
     var container = document.getElementById(container_id);
     var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 2, 2000 );
     var scene = new THREE.Scene();
     var renderer = new THREE.WebGLRenderer( { antialias: true } );
+//    var renderer = new THREE.CanvasRenderer({antialias: true});
     var controls = new THREE.OrbitControls(camera);
 
     var default_camera_position = new THREE.Vector3(400, 400, 300);
@@ -13,17 +14,20 @@ function Viewer(container_id, path_to_model) {
     var object;
     var gui;
     var command = new function() {
-                  this.Home  = function() {camera.position = default_camera_position; render();};
+                  this.Home  = function() {camera.position.set(400, 400, 300); render();};
                   this.X = function() {camera.position.set(500, 0, 0); render();};
                   this.Y = function() {camera.position.set(0, 500, 0); render();};
                   this.Z = function() {camera.position.set(0, 0, 500); render();};
                 };
 
+    this.Render = render;
+
+
     init();
 
     function init() {
         // web gl enable?
-        if ( !Detector.webgl ) Detector.addGetWebGLMessage();
+        //if ( !Detector.webgl ) Detector.addGetWebGLMessage();
         
         //camera, controls and scene
         camera.position = default_camera_position;
@@ -53,24 +57,24 @@ function Viewer(container_id, path_to_model) {
         addGui(command);
 
         //load
-        load(path_to_model);
+        //Viewer.load(path_to_model);
 
-        render();
+        //render();
     };
 
-    function load(path) {
+    this.load = function load(path, texture_path) {
         function json_loader(_path){
-            var loader = new THREE.JSONLoader();
+            var json_loader = new THREE.JSONLoader();
             var callbackObject = function(geometry, material){
             var zmesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( material ) );
             zmesh.position.set( 0, 0, 0 );
-            if(zmesh.scale.y < 5) zmesh.scale.set(5, 5, 5 );
+            if(zmesh.height < 10) zmesh.scale.set(3, 3, 5 );
             object = zmesh;
             scene.add( zmesh );
             //return zmesh;
         }
             //scene.add(loader.load(_path, callbackObject));
-            loader.load(_path, callbackObject);
+            json_loader.load(_path, callbackObject);
        }
         function stl_loader(_path) {
            var stl_loader = new THREE.STLLoader();
@@ -87,9 +91,48 @@ function Viewer(container_id, path_to_model) {
 
             stl_loader.load(_path);
         }
+        function obj_loader(_path, _texture) {
+            var obj_manager = new THREE.LoadingManager();
+            obj_manager.onProgress = function ( item, loaded, total ) {
+                console.log( item, loaded, total );
+            };
+
+            var texture = new THREE.Texture();
+
+            var obj_loader = new THREE.ImageLoader( obj_manager);
+            obj_loader.load( _texture, function ( image ) {
+
+                texture.image = image;
+                texture.needsUpdate = true;
+
+            } );
+
+            // model
+
+            var obj_loader = new THREE.OBJLoader( obj_manager );
+            obj_loader.load( _path, function ( object ) {
+
+                object.traverse( function ( child ) {
+
+                    if ( child instanceof THREE.Mesh ) {
+
+                        child.material.map = texture;
+
+                    }
+
+                } );
+
+                scene.add( object );
+
+            } );
+        }
 
         if(/json/.test(path)) json_loader(path);
-        if(/obj/.test(path))  stl_loader(path);
+        if(/stl/.test(path))  stl_loader(path);
+        if(/obj/.test(path))  obj_loader(path, texture_path);
+
+
+        render();
     }
 
     function onWindowResize() {
@@ -133,9 +176,9 @@ function Viewer(container_id, path_to_model) {
 
     function addGui(comm){
         gui = new dat.GUI();
-        gui.add(comm, "Home");
-        gui.add(comm, "X");
-        gui.add(comm, "Y");
+        gui.add(comm, 'Home');
+        gui.add(comm, 'X');
+        gui.add(comm, 'Y');
         gui.add(comm, 'Z');
     }
 }
