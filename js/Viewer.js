@@ -142,7 +142,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
     }
 
     function render() {
-        requestAnimationFrame(render);
+   //     requestAnimationFrame(render);
         camera.lookAt(scene.position);
         renderer.render( scene, camera );
     }
