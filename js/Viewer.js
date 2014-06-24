@@ -57,7 +57,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
         //load
         load(path_to_model, path_to_texture);
 
-        render();
+         init_render();
     };
 
     function load(path, texture_path) {
@@ -140,7 +140,11 @@ function Viewer(path_to_model, path_to_texture, container_id) {
         render();
 
     }
-
+    
+    function init_render{
+ requestAnimationFrame( init_render );
+				render();
+}
     function render() {
    //     requestAnimationFrame(render);
         camera.lookAt(scene.position);
