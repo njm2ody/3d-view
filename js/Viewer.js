@@ -142,8 +142,8 @@ function Viewer(path_to_model, path_to_texture, container_id) {
     }
     
     function init_render(){
-            requestAnimationFrame( init_render );
-				render();
+        requestAnimationFrame( init_render );
+		render();
     }
     function render() {
    //     requestAnimationFrame(render);
