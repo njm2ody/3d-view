@@ -6,7 +6,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
     var container = document.getElementById(container_id);
     var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 2, 2000 );
     var scene = new THREE.Scene();
-    var renderer = new THREE.WebGLRenderer( { antialias: true } );
+    var renderer = new THREE.WebGLRenderer( { antialias: false } );
 //    var renderer = new THREE.CanvasRenderer({antialias: true});
     var controls = new THREE.OrbitControls(camera);
 
@@ -141,7 +141,7 @@ function Viewer(path_to_model, path_to_texture, container_id) {
 
     }
     
-    function init_render{
+    function init_render(){
  requestAnimationFrame( init_render );
 				render();
 }
